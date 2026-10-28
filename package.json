@@ -1,0 +1,10 @@
+
+{
+  "name": "nizhalarasi-gemini-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^1.30.0"
+  }
+}
