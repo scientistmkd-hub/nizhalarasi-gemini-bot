@@ -1,0 +1,56 @@
+
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(200).send("Nizhalarasi bot is running!");
+  }
+
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+
+  if (
+    secret &&
+    req.headers["x-telegram-bot-api-secret-token"] !== secret
+  ) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  try {
+    const message = req.body?.message;
+    const chatId = message?.chat?.id;
+    const userText = message?.text;
+
+    if (!chatId || !userText) {
+      return res.status(200).send("OK");
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: userText,
+    });
+
+    const reply =
+      response.text || "Sorry! Please try again.";
+
+    await fetch(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: reply.slice(0, 4000),
+        }),
+      }
+    );
+
+    return res.status(200).send("OK");
+  } catch (error) {
+    console.error("Bot error:", error.message);
+    return res.status(200).send("OK");
+  }
+}
